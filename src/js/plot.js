@@ -1,18 +1,20 @@
 import { GoogleCharts } from "google-charts";
-import { fetchData, getSampleData } from "./service.js";
+import { fetchData, getSampleData, getRequestParams } from "./service.js";
 import { getRSIDataArray, getEMADataArray, getBoolingerBandDataArray, getMacdDataArray } from "./utils.js";
 
 const arrayColumn = (arr, idx) => arr.map(x => x[idx]);
 const addColumn = (arr, column, colIdx) => arr.map((x, idx) => x[colIdx] = column[idx]);
 
 const plotColumnHeaders = ["day", "Price", "max", "open", "close",
-                            "Volume", "EMA", "Upper Boolinger Band", "Lower Boolinger Band"];
+                            "Volume", "EMA", "Upper Bollinger Band", "Lower Bollinger Band"];
 const rsiPlotColumnHeaders = ["day", "RSI"];
-const macdPlotColumnHeaders = ["day", "MACD", "Smoothed MACD"];
+const macdPlotColumnHeaders = ["day", "MACD", "Smoothed MACD", "Difference"];
 
 const apiData = fetchData();
 
-const PLOT_DAYS = 90;
+const dataCountRequestParam = parseInt(getRequestParams()["dataCount"]);
+console.log(dataCountRequestParam);
+const PLOT_DATA_COUNT = (Number.isInteger(dataCountRequestParam) && dataCountRequestParam < 500) ? dataCountRequestParam : 90;
 
 const KLINES_OPEN_TIME_IDX  = 0;
 const KLINES_OPEN_VAL_IDX   = 1;
@@ -37,9 +39,11 @@ const PLOT_RSI_RSI_IDX              = 1;
 const PLOT_MACD_TIME_IDX            = 0;
 const PLOT_MACD_MACD_IDX            = 1;
 const PLOT_MACD_SMOOTHED_MACD_IDX   = 2;
+const PLOT_MACD_DIFF_IDX            = 3;
 
-const DATA_MACD_MACD_IDX = 0;
+const DATA_MACD_MACD_IDX          = 0;
 const DATA_MACD_SMOOTHED_MACD_IDX = 1;
+const DATA_MACD_DIFF_IDX          = 2;
 
 const DATA_BOOLINGER_UPPER_BAND_IDX = 0;
 const DATA_BOOLINGER_LOWER_BAND_IDX = 1;
@@ -99,10 +103,11 @@ function generateRSIPlotData() {
 }
 
 function generateMACDPlotData() {
-  let plotData = Array(500).fill(0).map(() => new Array(3));
+  let plotData = Array(500).fill(0).map(() => new Array(4));
   addColumn(plotData, open_time_array, PLOT_MACD_TIME_IDX);
   addColumn(plotData, macd_val_arrays[DATA_MACD_MACD_IDX], PLOT_MACD_MACD_IDX);
   addColumn(plotData, macd_val_arrays[DATA_MACD_SMOOTHED_MACD_IDX], PLOT_MACD_SMOOTHED_MACD_IDX);
+  addColumn(plotData, macd_val_arrays[DATA_MACD_DIFF_IDX], PLOT_MACD_DIFF_IDX);
 
   return plotData;
 }
@@ -118,7 +123,7 @@ function getMonthAndDateByTimestamp(UNIX_timestamp) {
 
 //Chart initializer callback function
 export function initChart() {
-  let plotData = generatePlotData().splice(-1 * PLOT_DAYS);
+  let plotData = generatePlotData().splice(-1 * PLOT_DATA_COUNT);
   plotData.unshift(plotColumnHeaders);
   const chartData = google.visualization.arrayToDataTable(plotData);
   const lineChartObj = new GoogleCharts.api.visualization.LineChart(plotEl);
@@ -152,7 +157,7 @@ export function initChart() {
 }
 
 export function initRSIPlot() {
-  let plotData = generateRSIPlotData().splice(-1 * PLOT_DAYS);
+  let plotData = generateRSIPlotData().splice(-1 * PLOT_DATA_COUNT);
 
   plotData.unshift(rsiPlotColumnHeaders);
 
@@ -163,13 +168,29 @@ export function initRSIPlot() {
 }
 
 export function initMACDPlot() {
-  let plotData = generateMACDPlotData().splice(-1 * PLOT_DAYS);
+  let plotData = generateMACDPlotData().splice(-1 * PLOT_DATA_COUNT);
 
   plotData.unshift(macdPlotColumnHeaders);
 
   const chartData = google.visualization.arrayToDataTable(plotData);
   const lineChartObj = new GoogleCharts.api.visualization.LineChart(plotMACDEl);
 
-  lineChartObj.draw(chartData);
+  lineChartObj.draw(chartData, {
+    series: {
+      0: { 
+        type: "line",
+        targetAxisIndex: 0
+      },
+      1: { 
+        type: "line",
+        targetAxisIndex: 0,
+      },
+      2: {
+        type: "bars",
+        targetAxisIndex: 1,
+        dataOpacity: "0.3"
+      },
+    },
+  });
 }
 

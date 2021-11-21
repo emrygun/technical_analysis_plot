@@ -14,17 +14,18 @@ body {
     justify-content: center;
     align-items: center;
     flex-direction: column;
+    overflow-x: hidden;
 
+    padding-top: 10vh;
+    padding-bottom: 10vh;
     .plot {
       height: 40vh;
       width: 80vw;
-      &.rsi {
-        height: 20vh;
-        width: 75vw;
-      }
-      &.macd {
-        height: 20vh;
-        width: 75vw;
+      min-height: 150px;
+
+      @media (min-height: 600px) and (min-width: 800px){
+        min-height: 200px;
+        min-width: 800px;
       }
     }
   }

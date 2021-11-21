@@ -17,11 +17,25 @@
   ]
 */
 
-//Constants
-const interval = "1d";
-const symbol = "BTCUSDT"
+//Request Params
+export function getRequestParams() {
+  let params = {};
+  window.location.search
+    .replace(/[?&]+([^=&]+)=([^&]*)/gi, function(str,key,value) {
+      params[key] = value;
+    }
+  );
+  return params;
+}
 
-const klineApiEndpoint = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}`;
+const intervalRequestParam = getRequestParams()["interval"];
+const intervalSymbolParam = getRequestParams()["symbol"];
+
+//Constants
+var interval = intervalRequestParam ? intervalRequestParam : "1d";
+var symbol = intervalSymbolParam ? intervalSymbolParam : "BTCUSDT"
+
+var klineApiEndpoint = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}`;
 
 export function fetchData() {
   let data;
@@ -30,8 +44,15 @@ export function fetchData() {
     url: klineApiEndpoint,
     type: "GET",
     async: false,
+    defaultInterval: "1d",
+    defaultSymbol: "BTCUSDT",
     success: response => {
       data = response;
+    },
+    error: () => {
+      interval = this.defaultInterval;
+      symbol = this.defaultInterval;
+      $.ajax(this);
     }
   });
 

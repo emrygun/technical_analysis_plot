@@ -97,5 +97,7 @@ export function getMacdDataArray(closeData, avgOffset1 = 12, avgOffset2 = 26, sm
   const MACD = EMA1.map((val, idx) => val - EMA2[idx]);
   const EMA_MACD = getEMADataArray(MACD, smoothingConstant);
 
-  return [MACD, EMA_MACD];
+  const diffHistogram = MACD.map((val, idx) => val - EMA_MACD[idx]);
+
+  return [MACD, EMA_MACD, diffHistogram];
 }
